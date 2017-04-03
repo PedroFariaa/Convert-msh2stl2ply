@@ -6,10 +6,16 @@
 using namespace std;
 
 vector<Node> nodes = vector<Node>();
-vector <Element> elements;
+vector<Element> elements;
 vector<string> coord;
 vector<string> elem;
 int gmesh_state = 0;
+
+vector<Node> nodes2;
+vector<Element> elements2;
+vector<string> parse_elements;
+vector<Node> element_nodes;
+int stl_state = 0;
 
 vector<string> split(const string& s)
 {
@@ -84,6 +90,63 @@ void parseLine_gmsh(string line) {
 	}
 }
 
+void parseLine_stl_vertex(string line) {
+	bool exists = false;
+	parse_elements = split(line.c_str());
+
+	if (parse_elements[0] == "facet") {
+		element_nodes = vector<Node>();
+	}
+
+	if (parse_elements[0] == "vertex") {
+		//check if exists
+		for each (Node n in nodes2)	{
+			if (n.getX() == stof(parse_elements[1]) && n.getY() == stof(parse_elements[2]) && n.getZ() == stof(parse_elements[3])){
+				element_nodes.push_back(n);
+				exists = true;
+			}
+		}
+		//if doesn't
+		if (exists == false){
+			Node n2 = Node(nodes2.size() + 1, stof(parse_elements[1]), stof(parse_elements[2]), stof(parse_elements[3]));
+			nodes2.push_back(n2);
+			element_nodes.push_back(n2);
+		}else
+			exists = false;
+	}
+	if (parse_elements[0] == "endloop") {
+		Element e2 = Element(elements2.size()+1, element_nodes[0].getId(), element_nodes[1].getId(), element_nodes[2].getId());
+		elements2.push_back(e2);
+	}
+}
+
+void parseLine_stl_element(string line) {
+	//
+}
+
+/*
+void parseLine_stl(string line) {
+	if (strcmp(line.c_str(), "end_header") == 0)
+		stl_state = 1;
+
+	if(stl_state == 1) {
+		parse_elements = split(line.c_str());
+		if (parse_elements.size() == 3) {
+			//create Node
+			Node n2 = Node(nodes2.size() + 1, stof(parse_elements[0]), stof(parse_elements[1]), stof(parse_elements[2]));
+			nodes2.push_back(n2);
+			cout << "created node\n";
+		} else {
+			//create Element
+			Element e2 = Element(elements2.size()+1, stoi(parse_elements[1]), stoi(parse_elements[2]), stoi(parse_elements[3]));
+			elements2.push_back(e2);
+			cout << "created element\n";
+		}
+	}
+}
+*/
+
+		
 void write_stl() {
 	ofstream outputFile("program3data.stl"); //output name needs to be changed
 	outputFile << "solid created\n";
@@ -108,6 +171,32 @@ void write_stl() {
 	outputFile.close();
 }
 
+void write_ply() {
+	ofstream outputFile("program3data.ply"); //output name needs to be changed
+	//writting header to file
+	outputFile << "ply\nformat ascii 1.0\ncomment VCGLIB generated\nelement vertex " << nodes2.size() << "\nproperty float x\nproperty float y\nproperty float z\nelement face " << 
+		elements2.size() << "\nproperty list uchar int vertex_indices\nend_header\n";
+	//write all nodes
+	for each (Node n in nodes2)	{
+		string s = "";
+		s.append(n.getX_string());
+		s.append(" ");
+		s.append(n.getY_string());
+		s.append(" ");
+		s.append(n.getZ_string());
+		outputFile << s << "\n";
+	}
+	//write all elements
+	for each (Element e in elements2) {
+		outputFile << "3 ";
+		for each (int nid in e.getNodesId()) {
+			outputFile << to_string(nid-1) << " ";
+		}
+		outputFile << " \n";
+	}
+	outputFile.close();
+}
+
 void msh2stl() {
 	string file_path = "../msh.msh";
 	string line;
@@ -121,8 +210,21 @@ void msh2stl() {
 	write_stl();
 }
 
-int main() {
-	msh2stl();
+void stl2ply() {
+	string file_path = "../stl.stl";
+	string line;
+	ifstream myfile(file_path);
+	if (myfile.is_open()) {
+		while (getline(myfile, line)) {
+			parseLine_stl_vertex(line);
+		}
+		myfile.close();
+	}
+	write_ply();
+}
 
+int main() {
+	//msh2stl();
+	stl2ply();
 	return 0;
 }

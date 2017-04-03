@@ -35,6 +35,10 @@ float Node::getZ()
 	return this->Z_coord;
 }
 
+string Node::getID_string() {
+	return to_string(this->id);
+}
+
 string Node::getX_string(){
 	return to_string(this->X_coord);
 }

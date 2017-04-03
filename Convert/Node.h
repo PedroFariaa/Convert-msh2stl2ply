@@ -14,6 +14,7 @@ public:
 	float getX();
 	float getY();
 	float getZ();
+	string getID_string();
 	string getX_string();
 	string getY_string();
 	string getZ_string();

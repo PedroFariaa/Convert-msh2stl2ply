@@ -11,6 +11,7 @@ class Element {
 
 public:
 	Element(int id, int elem_type, int label, vector<Node> nodes);
+	Element(int id, int elem_type, Node node1, Node node2, Node node3);
 	Element(int id, int node1, int node2, int node3);
 	int getType();
 	vector<Node> getNodes();
